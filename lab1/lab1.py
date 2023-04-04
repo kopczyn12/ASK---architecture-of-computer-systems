@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPalette, QColor, QPainter, QPen, QBrush, QFont
 from PyQt5.QtCore import Qt, QTimer, QTime, QPoint, QRectF
 
 class DigitalClock(QLabel):
+    """Digital Clock class"""
     def __init__(self):
         super().__init__()
         timer = QTimer(self)
@@ -13,6 +14,7 @@ class DigitalClock(QLabel):
         self.update()
 
     def update(self):
+        """Update the time"""
         time = QTime.currentTime()
         text = time.toString('hh:mm:ss')
         self.setText(text)
@@ -25,6 +27,7 @@ class AnalogClock(QWidget):
         timer.start(1000)
 
     def paintEvent(self, event):
+        """Painting the event"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.TextAntialiasing)
@@ -32,10 +35,10 @@ class AnalogClock(QWidget):
         rect = QRectF(0, 0, self.width(), self.height())
         painter.setViewport(rect.toRect())
         painter.setWindow(rect.toRect())
-
         self.drawClock(painter)
 
     def drawClock(self, painter):
+        """Drawing the clock"""
         side = min(self.width(), self.height())
         painter.scale(side / 200.0, side / 200.0)
         painter.translate(100, 100)
@@ -75,6 +78,7 @@ class AnalogClock(QWidget):
         painter.drawEllipse(QPoint(0, 0), 95, 95)
 
 class Calculator(QMainWindow):
+    """The calculator class"""
     def __init__(self):
         super().__init__()
         self.light_theme = True
@@ -82,24 +86,28 @@ class Calculator(QMainWindow):
         self.set_light_theme()
         
     def initUI(self):
+        """Init UI of the window"""
         self.setWindowTitle('Calculator')
-        self.setFixedSize(300, 400)
+        self.setFixedSize(500, 500)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
+        #result box
         self.result_box = QLineEdit(self)
         self.result_box.setReadOnly(False)
         self.result_box.setAlignment(Qt.AlignRight)
         self.result_box.setMaxLength(15)
         self.result_box.keyPressEvent = self.new_keyPressEvent
 
+        #main layout
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.result_box)
 
         grid = QGridLayout()
         main_layout.addLayout(grid)
 
+        #list of the buttons
         buttons = [
             ('7', self.add_digit),
             ('8', self.add_digit),
@@ -119,6 +127,7 @@ class Calculator(QMainWindow):
             ('+', self.add_operator),
         ]
 
+        # here we are simply making a 'matrix' of these buttons
         row = 0
         col = 0
 
@@ -132,6 +141,7 @@ class Calculator(QMainWindow):
                 col = 0
                 row += 1
 
+        #switch theme button
         self.theme_button = QPushButton('Switch Theme', self)
         self.theme_button.clicked.connect(self.switch_theme)
         main_layout.addWidget(self.theme_button)
@@ -146,6 +156,7 @@ class Calculator(QMainWindow):
         self.digital_clock.hide()
 
         def switch_clock():
+            """Switching the clock"""
             nonlocal self
             if self.clock.isVisible():
                 self.clock.hide()
@@ -165,14 +176,17 @@ class Calculator(QMainWindow):
         self.light_theme = True
         self.set_light_theme()        
 
+    #communication by keyboard with the result box
     def new_keyPressEvent(self, event):
+        """Event handling by the keyboard"""
         key = event.key()
         if key == Qt.Key_Enter or key == Qt.Key_Return:
             self.calculate()
         else:
             QLineEdit.keyPressEvent(self.result_box, event)
-            
+
     def add_digit(self):
+        """Adding digit to the result box"""
         digit = self.sender().text()
         current_text = self.result_box.text()
 
@@ -182,6 +196,7 @@ class Calculator(QMainWindow):
         self.result_box.setText(current_text + digit)
 
     def add_operator(self):
+        """Adding operator to the result box"""
         operator = self.sender().text()
         current_text = self.result_box.text()
 
@@ -191,15 +206,17 @@ class Calculator(QMainWindow):
         self.result_box.setText(current_text + operator)
 
     def calculate(self):
+        """Calculation of the formula"""
         try:
             result = eval(self.result_box.text())
             self.result_box.setText(str(result))
         except ZeroDivisionError:
-            self.result_box.setText('Error')
+            self.result_box.setText('Error! Division by zero')
         except Exception as e:
             self.result_box.setText('Error')
 
     def switch_theme(self):
+        """Switching the theme between light and dark"""
         self.light_theme = not self.light_theme
 
         if self.light_theme:
@@ -208,6 +225,7 @@ class Calculator(QMainWindow):
             self.set_dark_theme()
 
     def set_light_theme(self):
+        """Setting light theme"""
         light_palette = QPalette()
         light_palette.setColor(QPalette.Window, QColor(255, 255, 255))
         light_palette.setColor(QPalette.WindowText, QColor(0, 0, 0))
@@ -222,6 +240,7 @@ class Calculator(QMainWindow):
         self.setPalette(light_palette)
 
     def set_dark_theme(self):
+        """Setting dark theme"""
         dark_palette = QPalette()
         dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
         dark_palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
@@ -236,10 +255,11 @@ class Calculator(QMainWindow):
         self.setPalette(dark_palette)
 
 def main():
+    """main function"""
     app = QApplication(sys.argv)
     calculator = Calculator()
     calculator.show()
     sys.exit(app.exec_())
-
+    
 if __name__ == '__main__':
     main()
