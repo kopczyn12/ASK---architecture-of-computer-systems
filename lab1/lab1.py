@@ -211,7 +211,7 @@ class Calculator(QMainWindow):
             result = eval(self.result_box.text())
             self.result_box.setText(str(result))
         except ZeroDivisionError:
-            self.result_box.setText('Error! Division by zero')
+            self.result_box.setText('Error!')
         except Exception as e:
             self.result_box.setText('Error')
 
@@ -260,6 +260,6 @@ def main():
     calculator = Calculator()
     calculator.show()
     sys.exit(app.exec_())
-    
+
 if __name__ == '__main__':
     main()
