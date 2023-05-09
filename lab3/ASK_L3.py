@@ -17,6 +17,7 @@ class Test1(QWidget):
 
 
     def startGame(self, test_approach=False):
+        self.test_approach = test_approach
         self.main_window.clearLayout()
 
         layout = QVBoxLayout()
@@ -77,7 +78,10 @@ class Test1(QWidget):
     def stop_timer(self):
         if self.audio_played:
             elapsed_time = self.timer.elapsed()
-            self.main_window.showTestResult(elapsed_time)
+            if self.test_approach:
+                self.main_window.showTestResult(elapsed_time, self.startGame)
+            else:
+                self.main_window.showTestResult(elapsed_time)
 
 
 class Test2(QWidget):
@@ -91,7 +95,7 @@ class Test2(QWidget):
         self.color_changed = False
 
     def startGame(self, test_approach=False):
-        self.main_window.clearLayout()
+        self.test_approach = test_approach
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -146,7 +150,10 @@ class Test2(QWidget):
     def stop_timer(self):
         if self.color_changed:
             elapsed_time = self.timer.elapsed()
-            self.main_window.showTestResult(elapsed_time)
+            if self.test_approach:
+                self.main_window.showTestResult(elapsed_time, self.startGame)
+            else:
+                self.main_window.showTestResult(elapsed_time)
 
 
 class Test3(QGraphicsScene):
@@ -261,7 +268,7 @@ class MainWindow(QMainWindow):
 
         return wrapped
 
-    def showTestResult(self, reaction_time):
+    def showTestResult(self, reaction_time, retry_callback=None):
         self.clearLayout()
 
         central_widget = QWidget()
@@ -286,6 +293,13 @@ class MainWindow(QMainWindow):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(spacer)
+
+        if retry_callback:
+            # Real attempt button
+            real_attempt_button = QPushButton("REAL ATTEMPT")
+            real_attempt_button.setFont(QFont('Arial', 30))
+            real_attempt_button.clicked.connect(retry_callback)
+            layout.addWidget(real_attempt_button, alignment=Qt.AlignCenter)
 
         # Back to menu button
         menu_button = QPushButton("MENU")
