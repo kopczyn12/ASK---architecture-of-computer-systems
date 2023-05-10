@@ -6,6 +6,9 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 import random
 import time
 
+min_delay = 1000
+max_delay = 3000
+
 class Test1(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -15,8 +18,7 @@ class Test1(QWidget):
         self.audio_played = False
         self.big_button_visible = False
 
-
-    def startGame(self, test_approach=False):
+    def startGame(self, test_approach=True):
         self.test_approach = test_approach
         self.main_window.clearLayout()
 
@@ -26,6 +28,11 @@ class Test1(QWidget):
         self.start_countdown()
 
     def start_countdown(self):
+        # Spacer
+        spacer_top = QWidget()
+        spacer_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout().addWidget(spacer_top)
+
         self.countdown_label = QLabel("")
         self.countdown_label.setFont(QFont('Arial', 50))
         self.countdown_label.setAlignment(Qt.AlignCenter)
@@ -60,7 +67,7 @@ class Test1(QWidget):
             self.layout().addWidget(spacer_bottom)
 
         self.timer = QElapsedTimer()
-        delay = random.randint(1000, 5000)
+        delay = random.randint(min_delay, max_delay)
         QTimer.singleShot(delay, self.play_audio_and_start_timer)
 
     def play_audio_and_start_timer(self):
@@ -78,8 +85,9 @@ class Test1(QWidget):
     def stop_timer(self):
         if self.audio_played:
             elapsed_time = self.timer.elapsed()
+            self.player.stop()
             if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, self.startGame)
+                self.main_window.showTestResult(elapsed_time, 1)
             else:
                 self.main_window.showTestResult(elapsed_time)
 
@@ -94,7 +102,7 @@ class Test2(QWidget):
         self.background_color = 'white'
         self.color_changed = False
 
-    def startGame(self, test_approach=False):
+    def startGame(self, test_approach):
         self.test_approach = test_approach
 
         layout = QVBoxLayout()
@@ -103,6 +111,11 @@ class Test2(QWidget):
         self.start_countdown()
 
     def start_countdown(self):
+        # Spacer
+        spacer_top = QWidget()
+        spacer_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout().addWidget(spacer_top)
+
         self.countdown_label = QLabel("")
         self.countdown_label.setFont(QFont('Arial', 50))
         self.countdown_label.setAlignment(Qt.AlignCenter)
@@ -137,12 +150,11 @@ class Test2(QWidget):
             self.layout().addWidget(spacer_bottom)
 
         self.timer = QElapsedTimer()
-        delay = random.randint(1000, 5000)
+        delay = random.randint(min_delay, max_delay)
         QTimer.singleShot(delay, self.change_background_color_and_start_timer)
 
     def change_background_color_and_start_timer(self):
-        self.background_color = 'red'
-        self.setStyleSheet(f"background-color: {self.background_color};")
+        self.big_button.setStyleSheet("background-color : red")
         self.color_changed = True
         self.start_time = time.time()
         self.timer.start()
@@ -151,23 +163,203 @@ class Test2(QWidget):
         if self.color_changed:
             elapsed_time = self.timer.elapsed()
             if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, self.startGame)
+                self.main_window.showTestResult(elapsed_time, 2)
             else:
                 self.main_window.showTestResult(elapsed_time)
 
+class Test3(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.main_window = parent
+        self.timer = None
+        self.start_time = None
+        self.big_button_visible = False
+        self.color_changed = False
+        self.matched = False
 
-class Test3(QGraphicsScene):
-    pass
+    def startGame(self, test_approach):
+        self.test_approach = test_approach
 
-class Test4(QGraphicsScene):
-    pass
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.start_countdown()
+
+    def start_countdown(self):
+        self.countdown_label = QLabel("")
+        self.countdown_label.setFont(QFont('Arial', 50))
+        self.countdown_label.setAlignment(Qt.AlignCenter)
+        self.layout().addWidget(self.countdown_label)
+
+        QTimer.singleShot(0, lambda: self.update_countdown(3))
+
+    def update_countdown(self, count):
+        if count > 0:
+            self.countdown_label.setText(str(count))
+            QTimer.singleShot(1000, lambda: self.update_countdown(count - 1))
+        else:
+            self.layout().removeWidget(self.countdown_label)
+            self.countdown_label.deleteLater()
+            self.start_color_label_and_button()
+
+    def start_color_label_and_button(self):
+        self.color_label = QLabel(" ")
+        self.color_label.setFont(QFont('Arial', 50))
+        self.color_label.setAlignment(Qt.AlignCenter)
+        self.layout().addWidget(self.color_label)
+
+        self.big_button = QPushButton("PRESS!")
+        self.big_button.setFont(QFont('Arial', 100))
+        self.big_button.clicked.connect(self.stop_timer)
+        self.layout().addWidget(self.big_button, alignment=Qt.AlignCenter)
+
+        QTimer.singleShot(1500, self.show_mismatched_label)
+
+    def show_mismatched_label(self):
+        colors = ['red', 'blue', 'green', 'yellow']
+        color_name = random.choice(colors)
+        color_value = random.choice([c for c in colors if c != color_name])
+
+        if color_name == 'red':
+            self.color_label.setText('CZERWONY')
+        elif color_name == 'blue':
+            self.color_label.setText('NIEBIESKI')
+        elif color_name == 'green':
+            self.color_label.setText('ZIELONY')
+        elif color_name == 'yellow':
+            self.color_label.setText('ŻÓŁTY')
+
+        self.color_label.setStyleSheet(f"color : {color_value};")
+
+        QTimer.singleShot(1500, self.show_random_label)
+
+    def show_random_label(self):
+        colors = ['red', 'blue', 'green', 'yellow']
+        color_name = random.choice(colors)
+        color_value = random.choice(colors)
+
+        if color_name == 'red':
+            self.color_label.setText('CZERWONY')
+        elif color_name == 'blue':
+            self.color_label.setText('NIEBIESKI')
+        elif color_name == 'green':
+            self.color_label.setText('ZIELONY')
+        elif color_name == 'yellow':
+            self.color_label.setText('ŻÓŁTY')
+
+
+        self.color_label.setStyleSheet(f"color : {color_value};")
+
+        if color_name == color_value:
+            self.start_timer_and_enable_button()
+        else:
+            QTimer.singleShot(1500, self.show_random_label)
+
+    def start_timer_and_enable_button(self):
+        self.matched = True
+        self.timer = QElapsedTimer()
+        self.timer.start()
+
+    def stop_timer(self):
+        elapsed_time = self.timer.elapsed()
+        if self.matched:
+            if self.test_approach:
+                self.main_window.showTestResult(elapsed_time, 3)
+            else:
+                self.main_window.showTestResult(elapsed_time)
+
+class Test4(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.main_window = parent
+        self.timer = None
+        self.start_time = None
+        self.big_button_visible = False
+        self.pulse_count = 0
+
+    def startGame(self, test_approach):
+        self.test_approach = test_approach
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.start_countdown()
+
+    def start_countdown(self):
+        # Spacer
+        spacer_top = QWidget()
+        spacer_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout().addWidget(spacer_top)
+
+        self.countdown_label = QLabel("")
+        self.countdown_label.setFont(QFont('Arial', 50))
+        self.countdown_label.setAlignment(Qt.AlignCenter)
+        self.layout().addWidget(self.countdown_label)
+
+        # Spacer
+        spacer_bottom = QWidget()
+        spacer_bottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout().addWidget(spacer_bottom)
+
+        QTimer.singleShot(0, lambda: self.update_countdown(3))
+
+    def update_countdown(self, count):
+        if count > 0:
+            self.countdown_label.setText(str(count))
+            QTimer.singleShot(1000, lambda: self.update_countdown(count - 1))
+        else:
+            self.layout().removeWidget(self.countdown_label)
+            self.countdown_label.deleteLater()
+            self.start_reaction_test()
+
+    def start_reaction_test(self):
+        if not self.big_button_visible:
+            self.big_button_visible = True
+            self.big_button = QPushButton("PRESS!")
+            self.big_button.setFont(QFont('Arial', 100))
+            self.big_button.clicked.connect(self.stop_timer)
+            self.big_button.setEnabled(False)
+            self.layout().addWidget(self.big_button, alignment=Qt.AlignCenter)
+
+            # Spacer
+            spacer_bottom = QWidget()
+            spacer_bottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.layout().addWidget(spacer_bottom)
+
+        self.pulse_button()
+
+    def pulse_button(self):
+        if self.pulse_count < 2:
+            self.big_button.setStyleSheet("background-color : red")
+            QTimer.singleShot(50, lambda: self.set_button_white())
+        else:
+            self.start_time = time.time()
+            self.timer = QElapsedTimer()
+            self.timer.start()
+            self.big_button.setEnabled(True)
+
+    def set_button_white(self):
+        self.big_button.setStyleSheet("background-color : white")
+        self.pulse_count += 1
+        QTimer.singleShot(950, self.pulse_button)
+
+    def stop_timer(self):
+        if self.timer is not None:
+            elapsed_time = self.timer.elapsed() - 1000
+            if self.test_approach:
+                self.main_window.showTestResult(elapsed_time, 4)
+            else:
+                self.main_window.showTestResult(elapsed_time)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.test_id = None
-        self.test_games = ["T1", "T2", "T3", "T4"]
-        self.test_names = ["BODZIEC AUDIO", "BODZIEC VIDEO", "WPISYWANIE ZNAKÓW", "CIĄG RYTMICZNY"]
+        self.test_names = ["REAKCJA AUDIO", "REAKCJA VIDEO", "DOPASOWANIE KOLOR-TEKST", "CIĄG RYTMICZNY"] # Minigames names
+        self.test_approach = None
+        self.reactions = ['', '', '', '']
+        self.minigame = None
         self.showFullScreen()
         self.showMenu()
 
@@ -183,10 +375,17 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(main_layout)
 
         # Menu label
-        menu_label = QLabel("CZAS REAKCJI\nMENU")
-        menu_label.setFont(QFont("Arial", 30))
+        menu_label = QLabel("CZAS REAKCJI\nMENU\n")
+        menu_label.setFont(QFont("Arial", 50))
         menu_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(menu_label)
+
+        # Tests results
+        results_label = QLabel("\n".join(
+            [f"{name}: {result} ms" for name, result in zip(self.test_names, self.reactions) if result != '']))
+        results_label.setFont(QFont("Arial", 30))
+        results_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(results_label)
 
         buttons_layout = QVBoxLayout()
 
@@ -196,7 +395,34 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(spacer)
 
         # Buttons
-        test_dsc = ["Opis1\nTutaj zaraz będzie to i to\n tekst dolny", "opis testu 2", "opis testu 3\ntekst dolny", "opis tekstu 4"]
+        test_dsc = ["\nTest mierzy szybkość reakcji na bodźce słuchowe."
+                    "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
+                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS po usłyszeniu sygnału dźwiękowego."
+                    "\nWynik testu próbnego nie jest zapisywany"
+                    "\nWciśnij przycisk START aby rozpocząć.",
+
+                    "\nTest mierzy szybkość reakcji na bodźce wzrokowe."
+                    "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
+                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS po zmianie jego koloru na czerwony."
+                    "\nWynik testu próbnego nie jest zapisywany"
+                    "\nWciśnij przycisk START aby rozpocząć.",
+
+                    "\nTest mierzy szybkość reakcji na zmiany wizualne"
+                    "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
+                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS gdy kolor tekstu pokryje się z wyświetlaną nazwą."
+                    "\nWynik testu próbnego nie jest zapisywany"
+                    "\nWciśnij przycisk START aby rozpocząć.",
+
+                    "\nOpis 4."
+                    "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
+                    "\nOpis 4."
+                    "\nOpis 4."
+                    "\nWynik testu próbnego nie jest zapisywany"
+                    "\nWciśnij przycisk START aby rozpocząć."]
+
         for i in range(1, 5):
             button = QPushButton(f"{self.test_names[i-1]}")
             button.setFont(QFont('Arial', 30))
@@ -219,6 +445,7 @@ class MainWindow(QMainWindow):
         def wrapped():
             self.clearLayout()
             self.test_id = self.test_names.index(test_name)
+            self.test_approach = True
 
             central_widget = QWidget()
             self.setCentralWidget(central_widget)
@@ -251,7 +478,7 @@ class MainWindow(QMainWindow):
             # Moving on to the test attempt
             next_button = QPushButton("START")
             next_button.setFont(QFont('Arial', 30))
-            next_button.clicked.connect(getattr(self, self.test_games[self.test_id]))
+            next_button.clicked.connect(self.runTest)
             layout.addWidget(next_button, alignment=Qt.AlignCenter)
 
             # Back to menu button
@@ -270,6 +497,8 @@ class MainWindow(QMainWindow):
 
     def showTestResult(self, reaction_time, retry_callback=None):
         self.clearLayout()
+        self.test_approach = False
+
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -296,10 +525,18 @@ class MainWindow(QMainWindow):
 
         if retry_callback:
             # Real attempt button
+            self.test_id = retry_callback - 1
             real_attempt_button = QPushButton("REAL ATTEMPT")
             real_attempt_button.setFont(QFont('Arial', 30))
-            real_attempt_button.clicked.connect(retry_callback)
+            real_attempt_button.clicked.connect(self.runTest)
             layout.addWidget(real_attempt_button, alignment=Qt.AlignCenter)
+        else:
+            # Repeat button
+            self.reactions[self.test_id] = reaction_time
+            repeat_button = QPushButton("REPEAT TEST")
+            repeat_button.setFont(QFont('Arial', 30))
+            repeat_button.clicked.connect(self.runTest)
+            layout.addWidget(repeat_button, alignment=Qt.AlignCenter)
 
         # Back to menu button
         menu_button = QPushButton("MENU")
@@ -312,21 +549,45 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(spacer)
 
-    def T1(self):
+    def runTest(self):
         self.clearLayout()
 
-        minigame = Test1(self)
-        minigame.startGame(True)
+        tests = []
+        test1, test2, test3, test4 = Test1(self), Test2(self), Test3(self), Test4(self)
+        tests.append(test1)
+        tests.append(test2)
+        tests.append(test3)
+        tests.append(test4)
 
-        self.setCentralWidget(minigame)
+        self.minigame = tests[self.test_id]
+
+        if self.test_approach:
+            self.minigame.startGame(True)
+        else:
+            self.minigame.startGame(False)
+
+        self.setCentralWidget(self.minigame)
+
+    def T1(self):
+        self.clearLayout()
+        self.minigame = Test1(self)
+        if self.test_approach:
+            self.minigame.startGame(True)
+        else:
+            self.minigame.startGame(False)
+
+        self.setCentralWidget(self.minigame)
 
     def T2(self):
         self.clearLayout()
 
-        minigame = Test2(self)
-        minigame.startGame(True)
+        self.minigame = Test2(self)
+        if self.test_approach:
+            self.minigame.startGame(True)
+        else:
+            self.minigame.startGame(False)
 
-        self.setCentralWidget(minigame)
+        self.setCentralWidget(self.minigame)
 
     def T3(self):
         pass
