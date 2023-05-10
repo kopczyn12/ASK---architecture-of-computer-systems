@@ -91,7 +91,6 @@ class Test1(QWidget):
             else:
                 self.main_window.showTestResult(elapsed_time)
 
-
 class Test2(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -210,7 +209,6 @@ class Test3(QWidget):
 
         self.big_button = QPushButton("PRESS!")
         self.big_button.setFont(QFont('Arial', 100))
-        self.big_button.clicked.connect(self.stop_timer)
         self.layout().addWidget(self.big_button, alignment=Qt.AlignCenter)
 
         QTimer.singleShot(1500, self.show_mismatched_label)
@@ -257,6 +255,7 @@ class Test3(QWidget):
 
     def start_timer_and_enable_button(self):
         self.matched = True
+        self.big_button.clicked.connect(self.stop_timer)
         self.timer = QElapsedTimer()
         self.timer.start()
 
@@ -274,8 +273,8 @@ class Test4(QWidget):
         self.main_window = parent
         self.timer = None
         self.start_time = None
-        self.big_button_visible = False
         self.pulse_count = 0
+        self.timer_stopped = False
 
     def startGame(self, test_approach):
         self.test_approach = test_approach
@@ -283,23 +282,36 @@ class Test4(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
+        self.big_button = QPushButton("PRESS!")
+        self.big_button.setFont(QFont('Arial', 100))
+        self.layout().addWidget(self.big_button, alignment=Qt.AlignCenter)
+
+        # Spacer
+        spacer_bottom = QWidget()
+        spacer_bottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout().addWidget(spacer_bottom)
+
         self.start_countdown()
 
     def start_countdown(self):
         # Spacer
         spacer_top = QWidget()
         spacer_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.layout().addWidget(spacer_top)
+        self.layout().insertWidget(0, spacer_top)
 
         self.countdown_label = QLabel("")
         self.countdown_label.setFont(QFont('Arial', 50))
         self.countdown_label.setAlignment(Qt.AlignCenter)
-        self.layout().addWidget(self.countdown_label)
+        self.layout().insertWidget(1, self.countdown_label)
 
         # Spacer
         spacer_bottom = QWidget()
         spacer_bottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.layout().addWidget(spacer_bottom)
+        self.layout().insertWidget(2, spacer_bottom)
+
+        self.start_time = time.time()
+        self.timer = QElapsedTimer()
+        self.timer.start()
 
         QTimer.singleShot(0, lambda: self.update_countdown(3))
 
@@ -310,42 +322,29 @@ class Test4(QWidget):
         else:
             self.layout().removeWidget(self.countdown_label)
             self.countdown_label.deleteLater()
-            self.start_reaction_test()
-
-    def start_reaction_test(self):
-        if not self.big_button_visible:
-            self.big_button_visible = True
-            self.big_button = QPushButton("PRESS!")
-            self.big_button.setFont(QFont('Arial', 100))
-            self.big_button.clicked.connect(self.stop_timer)
-            self.big_button.setEnabled(False)
-            self.layout().addWidget(self.big_button, alignment=Qt.AlignCenter)
-
-            # Spacer
-            spacer_bottom = QWidget()
-            spacer_bottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self.layout().addWidget(spacer_bottom)
-
-        self.pulse_button()
+            QTimer.singleShot(1000, self.pulse_button)  # Start pulsing after the countdown
 
     def pulse_button(self):
-        if self.pulse_count < 2:
+        if self.pulse_count < 2 and not self.timer_stopped:
             self.big_button.setStyleSheet("background-color : red")
             QTimer.singleShot(50, lambda: self.set_button_white())
+        elif self.pulse_count == 2 and not self.timer_stopped:
+            self.big_button.setStyleSheet("background-color : red")
+            QTimer.singleShot(50, lambda: self.set_button_white(True))
         else:
-            self.start_time = time.time()
-            self.timer = QElapsedTimer()
-            self.timer.start()
-            self.big_button.setEnabled(True)
+            QTimer.singleShot(50, lambda: self.set_button_white())
 
-    def set_button_white(self):
+    def set_button_white(self, enable_button=False):
         self.big_button.setStyleSheet("background-color : white")
         self.pulse_count += 1
+        if enable_button:
+            self.big_button.clicked.connect(self.stop_timer)
         QTimer.singleShot(950, self.pulse_button)
 
     def stop_timer(self):
         if self.timer is not None:
-            elapsed_time = self.timer.elapsed() - 1000
+            self.timer_stopped = True
+            elapsed_time = self.timer.elapsed() - 7000
             if self.test_approach:
                 self.main_window.showTestResult(elapsed_time, 4)
             else:
@@ -397,31 +396,32 @@ class MainWindow(QMainWindow):
         # Buttons
         test_dsc = ["\nTest mierzy szybkość reakcji na bodźce słuchowe."
                     "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
-                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
-                    "\nPRESS po usłyszeniu sygnału dźwiękowego."
                     "\nWynik testu próbnego nie jest zapisywany"
-                    "\nWciśnij przycisk START aby rozpocząć.",
+                    "\nWciśnij przycisk START aby rozpocząć."
+                    "\n\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS po usłyszeniu sygnału dźwiękowego.",
 
                     "\nTest mierzy szybkość reakcji na bodźce wzrokowe."
                     "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
-                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
-                    "\nPRESS po zmianie jego koloru na czerwony."
                     "\nWynik testu próbnego nie jest zapisywany"
-                    "\nWciśnij przycisk START aby rozpocząć.",
+                    "\nWciśnij przycisk START aby rozpocząć."
+                    "\n\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS po zmianie jego koloru na czerwony.",
 
                     "\nTest mierzy szybkość reakcji na zmiany wizualne"
                     "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
-                    "\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
-                    "\nPRESS gdy kolor tekstu pokryje się z wyświetlaną nazwą."
                     "\nWynik testu próbnego nie jest zapisywany"
-                    "\nWciśnij przycisk START aby rozpocząć.",
+                    "\nWciśnij przycisk START aby rozpocząć."
+                    "\n\nUżytkownik będzie miał za zadanie jak najszybsze wciśnięcie przycisku"
+                    "\nPRESS gdy kolor tekstu pokryje się z wyświetlaną nazwą.",
 
-                    "\nOpis 4."
+                    "\nTest mierzy zdolność użytkownika do wyczucia rytmu"
                     "\nPrzed rozpoczęciem testu odbędzie się odliczanie."
-                    "\nOpis 4."
-                    "\nOpis 4."
                     "\nWynik testu próbnego nie jest zapisywany"
-                    "\nWciśnij przycisk START aby rozpocząć."]
+                    "\nWciśnij przycisk START aby rozpocząć."
+                    "\n\nUżytkownik będzie miał za zadanie dokończyć ciąg "
+                    "\nrytmiczny wyznaczony przez 3 czerwone mignięcia guzika PRESS"
+                    "\n(trzeba kliknąć PRESS w momencie gdy guzik miałby znów zmienić kolor)."]
 
         for i in range(1, 5):
             button = QPushButton(f"{self.test_names[i-1]}")
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(spacer)
 
         # Exit button
-        exit_button = QPushButton("EXIT")
+        exit_button = QPushButton("WYJŚCIE")
         exit_button.setFont(QFont('Arial', 30))
         exit_button.clicked.connect(self.close_application)
         buttons_layout.addWidget(exit_button)
@@ -513,7 +513,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(test_label)
 
         # Test result
-        result_label = QLabel(f"Reaction time: {reaction_time} ms")
+        result_label = QLabel(f"Czas reakcji: {reaction_time} ms")
         result_label.setFont(QFont('Arial', 30))
         result_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(result_label)
@@ -526,14 +526,14 @@ class MainWindow(QMainWindow):
         if retry_callback:
             # Real attempt button
             self.test_id = retry_callback - 1
-            real_attempt_button = QPushButton("REAL ATTEMPT")
+            real_attempt_button = QPushButton("PRAWDZIWY TEST")
             real_attempt_button.setFont(QFont('Arial', 30))
             real_attempt_button.clicked.connect(self.runTest)
             layout.addWidget(real_attempt_button, alignment=Qt.AlignCenter)
         else:
             # Repeat button
             self.reactions[self.test_id] = reaction_time
-            repeat_button = QPushButton("REPEAT TEST")
+            repeat_button = QPushButton("POWTÓRZ TEST")
             repeat_button.setFont(QFont('Arial', 30))
             repeat_button.clicked.connect(self.runTest)
             layout.addWidget(repeat_button, alignment=Qt.AlignCenter)
@@ -567,33 +567,6 @@ class MainWindow(QMainWindow):
             self.minigame.startGame(False)
 
         self.setCentralWidget(self.minigame)
-
-    def T1(self):
-        self.clearLayout()
-        self.minigame = Test1(self)
-        if self.test_approach:
-            self.minigame.startGame(True)
-        else:
-            self.minigame.startGame(False)
-
-        self.setCentralWidget(self.minigame)
-
-    def T2(self):
-        self.clearLayout()
-
-        self.minigame = Test2(self)
-        if self.test_approach:
-            self.minigame.startGame(True)
-        else:
-            self.minigame.startGame(False)
-
-        self.setCentralWidget(self.minigame)
-
-    def T3(self):
-        pass
-
-    def T4(self):
-        pass
 
     def clearLayout(self):
         central_widget = self.centralWidget()
