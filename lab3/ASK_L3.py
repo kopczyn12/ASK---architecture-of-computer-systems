@@ -46,12 +46,12 @@ class Test1(QWidget):
         QTimer.singleShot(0, lambda: self.update_countdown(3))
 
     def update_countdown(self, count):
-        if count > 0:
+        if count > 0:                                   # Countdown
             self.countdown_label.setText(str(count))
             QTimer.singleShot(1000, lambda: self.update_countdown(count - 1))
-        else:
-            self.layout().removeWidget(self.countdown_label)  # Usuń countdown_label z layoutu
-            self.countdown_label.deleteLater()  # Usuń obiekt countdown_label
+        else:                                           # Starting tests
+            self.layout().removeWidget(self.countdown_label)
+            self.countdown_label.deleteLater()
             self.start_reaction_test()
 
     def start_reaction_test(self):
@@ -86,10 +86,7 @@ class Test1(QWidget):
         if self.audio_played:
             elapsed_time = self.timer.elapsed()
             self.player.stop()
-            if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, 1)
-            else:
-                self.main_window.showTestResult(elapsed_time)
+            self.main_window.showTestResult(elapsed_time)
 
 class Test2(QWidget):
     def __init__(self, parent=None):
@@ -132,8 +129,8 @@ class Test2(QWidget):
             self.countdown_label.setText(str(count))
             QTimer.singleShot(1000, lambda: self.update_countdown(count - 1))
         else:
-            self.layout().removeWidget(self.countdown_label)  # Usuń countdown_label z layoutu
-            self.countdown_label.deleteLater()  # Usuń obiekt countdown_label
+            self.layout().removeWidget(self.countdown_label)
+            self.countdown_label.deleteLater()
             self.start_reaction_test()
 
     def start_reaction_test(self):
@@ -161,10 +158,7 @@ class Test2(QWidget):
     def stop_timer(self):
         if self.color_changed:
             elapsed_time = self.timer.elapsed()
-            if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, 2)
-            else:
-                self.main_window.showTestResult(elapsed_time)
+            self.main_window.showTestResult(elapsed_time)
 
 class Test3(QWidget):
     def __init__(self, parent=None):
@@ -245,7 +239,6 @@ class Test3(QWidget):
         elif color_name == 'yellow':
             self.color_label.setText('ŻÓŁTY')
 
-
         self.color_label.setStyleSheet(f"color : {color_value};")
 
         if color_name == color_value:
@@ -262,10 +255,7 @@ class Test3(QWidget):
     def stop_timer(self):
         elapsed_time = self.timer.elapsed()
         if self.matched:
-            if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, 3)
-            else:
-                self.main_window.showTestResult(elapsed_time)
+            self.main_window.showTestResult(elapsed_time)
 
 class Test4(QWidget):
     def __init__(self, parent=None):
@@ -345,17 +335,14 @@ class Test4(QWidget):
         if self.timer is not None:
             self.timer_stopped = True
             elapsed_time = self.timer.elapsed() - 7000
-            if self.test_approach:
-                self.main_window.showTestResult(elapsed_time, 4)
-            else:
-                self.main_window.showTestResult(elapsed_time)
+            self.main_window.showTestResult(elapsed_time)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.test_id = None
-        self.test_names = ["REAKCJA AUDIO", "REAKCJA VIDEO", "DOPASOWANIE KOLOR-TEKST", "CIĄG RYTMICZNY"] # Minigames names
+        self.test_names = ["REAKCJA AUDIO", "REAKCJA VIDEO", "DOPASOWANIE KOLOR-TEKST", "CIĄG RYTMICZNY"]
         self.test_approach = None
         self.reactions = ['', '', '', '']
         self.minigame = None
@@ -492,13 +479,29 @@ class MainWindow(QMainWindow):
             spacer3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             layout.addWidget(spacer3)
 
-
         return wrapped
 
-    def showTestResult(self, reaction_time, retry_callback=None):
+    def runTest(self):
         self.clearLayout()
-        self.test_approach = False
 
+        tests = []
+        test1, test2, test3, test4 = Test1(self), Test2(self), Test3(self), Test4(self)
+        tests.append(test1)
+        tests.append(test2)
+        tests.append(test3)
+        tests.append(test4)
+
+        self.minigame = tests[self.test_id]
+
+        if self.test_approach:
+            self.minigame.startGame(True)
+        else:
+            self.minigame.startGame(False)
+
+        self.setCentralWidget(self.minigame)
+
+    def showTestResult(self, reaction_time):
+        self.clearLayout()
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -523,9 +526,8 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(spacer)
 
-        if retry_callback:
+        if self.test_approach:
             # Real attempt button
-            self.test_id = retry_callback - 1
             real_attempt_button = QPushButton("PRAWDZIWY TEST")
             real_attempt_button.setFont(QFont('Arial', 30))
             real_attempt_button.clicked.connect(self.runTest)
@@ -538,6 +540,8 @@ class MainWindow(QMainWindow):
             repeat_button.clicked.connect(self.runTest)
             layout.addWidget(repeat_button, alignment=Qt.AlignCenter)
 
+        self.test_approach = False
+
         # Back to menu button
         menu_button = QPushButton("MENU")
         menu_button.setFont(QFont('Arial', 30))
@@ -548,25 +552,6 @@ class MainWindow(QMainWindow):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(spacer)
-
-    def runTest(self):
-        self.clearLayout()
-
-        tests = []
-        test1, test2, test3, test4 = Test1(self), Test2(self), Test3(self), Test4(self)
-        tests.append(test1)
-        tests.append(test2)
-        tests.append(test3)
-        tests.append(test4)
-
-        self.minigame = tests[self.test_id]
-
-        if self.test_approach:
-            self.minigame.startGame(True)
-        else:
-            self.minigame.startGame(False)
-
-        self.setCentralWidget(self.minigame)
 
     def clearLayout(self):
         central_widget = self.centralWidget()
